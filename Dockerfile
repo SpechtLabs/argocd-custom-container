@@ -1,4 +1,4 @@
-FROM quay.io/argoproj/argocd:v2.8.3
+FROM quay.io/argoproj/argocd:v2.8.4
 
 ARG SOPS_VERSION="v3.7.3"
 ARG HELM_SECRETS_VERSION="4.4.1"
