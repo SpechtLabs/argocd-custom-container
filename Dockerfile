@@ -21,15 +21,14 @@ RUN apt-get update && \
     apt-get clean
 
 # Install SOPS
-RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* &&    \
-    curl -o /usr/local/bin/sops -L https://github.com/mozilla/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux && \
-    chmod +x /usr/local/bin/sops
+RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN arch=$(uname -m); echo $arch; if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then curl -o /usr/local/bin/sops -L https://github.com/mozilla/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.arm64; else curl -o /usr/local/bin/sops -L https://github.com/mozilla/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64; fi
+RUN chmod +x /usr/local/bin/sops
 
 # Install ksops
 RUN mkdir -p $PLUGIN_PATH
-RUN curl -o ./ksops.tar.gz -L https://github.com/viaduct-ai/kustomize-sops/releases/latest/download/ksops_latest_Linux_x86_64.tar.gz && \
-    tar -xf ./ksops.tar.gz -C $PLUGIN_PATH && \
-    chmod 777 $PLUGIN_PATH/ksops # fuck this...
+RUN arch=$(uname -m); echo $arch; if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then curl -o ./ksops.tar.gz -L https://github.com/viaduct-ai/kustomize-sops/releases/latest/download/ksops_latest_Linux_arm64.tar.gz; else curl -o ./ksops.tar.gz -L https://github.com/viaduct-ai/kustomize-sops/releases/latest/download/ksops_latest_Linux_x86_64.tar.gz; fi
+RUN tar -xf ./ksops.tar.gz -C $PLUGIN_PATH && chmod 777 $PLUGIN_PATH/ksops
 
 # Rename helm binaries (helm and helm2) with to helm.bin and helm2.bin
 RUN cd /usr/local/bin && \
