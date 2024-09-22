@@ -1,7 +1,7 @@
 FROM quay.io/argoproj/argocd:v2.11.7
 
 ARG SOPS_VERSION="v3.7.3"
-ARG HELM_SECRETS_VERSION="4.4.1"
+ARG HELM_SECRETS_VERSION="4.6.1"
 
 ENV HOME=/home/argocd
 ENV XDG_CONFIG_HOME=$HOME/.config
