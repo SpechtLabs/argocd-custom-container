@@ -43,7 +43,7 @@ RUN cd /usr/local/bin && \
 RUN chown -R argocd ${HOME}
 
 # helm secrets plugin should be installed as user argocd or it won't be found
-USER 1000
+USER $ARGOCD_USER_ID
 
 # Install helm plugin
 RUN /usr/local/bin/helm.bin plugin install https://github.com/jkroepke/helm-secrets --version ${HELM_SECRETS_VERSION}
