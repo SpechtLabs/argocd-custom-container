@@ -27,8 +27,9 @@ RUN chmod +x /usr/local/bin/sops
 
 # Install ksops
 RUN mkdir -p $PLUGIN_PATH
-RUN arch=$(uname -m); echo $arch; if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then curl -o ./ksops.tar.gz -L https://github.com/viaduct-ai/kustomize-sops/releases/latest/download/ksops_latest_Linux_arm64.tar.gz; else curl -o ./ksops.tar.gz -L https://github.com/viaduct-ai/kustomize-sops/releases/latest/download/ksops_latest_Linux_x86_64.tar.gz; fi
-RUN tar -xf ./ksops.tar.gz -C $PLUGIN_PATH && chmod 777 $PLUGIN_PATH/ksops
+RUN curl -o /usr/local/bin/ksops_install.sh -L https://raw.githubusercontent.com/viaduct-ai/kustomize-sops/master/scripts/install-ksops-archive.sh
+RUN chmod +x /usr/local/bin/ksops_install.sh
+RUN /usr/local/bin/ksops_install.sh $PLUGIN_PATH
 
 # Rename helm binaries (helm and helm2) with to helm.bin and helm2.bin
 RUN cd /usr/local/bin && \
@@ -46,4 +47,3 @@ USER 1000
 
 # Install helm plugin
 RUN /usr/local/bin/helm.bin plugin install https://github.com/jkroepke/helm-secrets --version ${HELM_SECRETS_VERSION}
-
