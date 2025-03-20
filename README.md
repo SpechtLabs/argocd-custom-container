@@ -1,5 +1,7 @@
 # ArgoCD Custom Container
 
+[![Docker Build](https://github.com/specht-labs/argocd-custom-container/actions/workflows/docker-build.yaml/badge.svg)](https://github.com/specht-labs/argocd-custom-container/actions/workflows/docker-build.yaml)
+
 🚀 **A custom ArgoCD container with built-in support for**:
 
 - [`helm-secrets`] – Securely manage Helm charts with encrypted secrets.
