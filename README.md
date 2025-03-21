@@ -1,6 +1,6 @@
 # ArgoCD Custom Container
 
-[![Docker Build](https://github.com/specht-labs/argocd-custom-container/actions/workflows/docker-build.yaml/badge.svg)](https://github.com/specht-labs/argocd-custom-container/actions/workflows/docker-build.yaml)
+[![Docker Build](https://github.com/SpechtLabs/argocd-custom-container/actions/workflows/docker-build.yaml/badge.svg)](https://github.com/SpechtLabs/argocd-custom-container/actions/workflows/docker-build.yaml)
 
 🚀 **A custom ArgoCD container with built-in support for**:
 
