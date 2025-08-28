@@ -8,12 +8,9 @@ ENV XDG_CONFIG_HOME=$HOME/.config
 
 ENV KUSTOMIZE_PLUGIN_HOME=$XDG_CONFIG_HOME/kustomize/plugin
 ENV PLUGIN_PATH=$KUSTOMIZE_PLUGIN_HOME/viaduct.ai/v1/ksops
-ENV HELM_PLUGINS="/home/argocd/.local/share/helm/plugins/"
 ENV SOPS_AGE_KEY_FILE=/helm-secrets/age_private_key
 
 USER root
-
-COPY helm-wrapper.sh /usr/local/bin/
 
 # Update system
 RUN apt-get update && \
@@ -31,19 +28,7 @@ RUN curl -o /usr/local/bin/ksops_install.sh -L https://raw.githubusercontent.com
 RUN chmod +x /usr/local/bin/ksops_install.sh
 RUN /usr/local/bin/ksops_install.sh $PLUGIN_PATH
 
-# Rename helm binaries (helm and helm2) with to helm.bin and helm2.bin
-RUN cd /usr/local/bin && \
-    mv helm helm.bin
-
-# Rename helm-wrapper.sh to helm and ensure the wrapper is also used when helm2 is being used
-RUN cd /usr/local/bin && \
-    mv helm-wrapper.sh helm && \
-    chmod +x helm
-
 RUN chown -R argocd ${HOME}
 
 # helm secrets plugin should be installed as user argocd or it won't be found
 USER $ARGOCD_USER_ID
-
-# Install helm plugin
-RUN /usr/local/bin/helm.bin plugin install https://github.com/jkroepke/helm-secrets --version ${HELM_SECRETS_VERSION}
