@@ -14,8 +14,8 @@ USER root
 
 # Update system
 RUN apt-get update && \
-    apt-get install -y curl gpg age && \
-    apt-get clean
+  apt-get install -y curl gpg age && \
+  apt-get clean
 
 # Install SOPS
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -32,3 +32,4 @@ RUN chown -R argocd ${HOME}
 
 # helm secrets plugin should be installed as user argocd or it won't be found
 USER $ARGOCD_USER_ID
+RUN helm plugin install https://github.com/jkroepke/helm-secrets --version ${HELM_SECRETS_VERSION}
