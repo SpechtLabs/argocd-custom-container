@@ -1,0 +1,70 @@
+name: Publish
+
+# Pushes the image to ghcr.io/spechtlabs/argocd-custom-container. A push to
+# main publishes the `main` tag, which k8s-deployment's Argo CD runs (with
+# imagePullPolicy Always); a `v*` tag publishes an image tagged with it.
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a publish half-way. Runs for the same ref queue instead: while
+# one runs, the newest push waits and replaces any older one still waiting, so
+# an older commit can never overwrite the `main` tag after a newer one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # The gate: lint, build and smoke-test, as on a pull request.
+  image:
+    name: Image
+    uses: ./.github/workflows/image.yaml
+
+  publish:
+    name: Build and push
+    runs-on: ubuntu-latest
+    needs:
+      - image
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The action's default tags, unchanged from the old docker-build.yaml: the
+      # branch name for a branch, the tag name for a tag.
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

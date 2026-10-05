@@ -1,0 +1,91 @@
+name: Image
+
+# Lints the repository, builds the image for both platforms and checks that
+# SOPS and ksops decrypt through Kustomize inside it. ci.yaml calls it for
+# pull requests, publish.yaml gates every publish on it, and it runs on its own
+# from the Actions tab. Nothing here pushes; publish.yaml does.
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Each job installs the tools listed below with mise-action's install_args.
+  # Without this, `mise run` installs every tool in .mise.toml first.
+  MISE_TASK_RUN_AUTO_INSTALL: "false"
+  # mise itself, pinned. Unpinned, mise-action picks the newest release and
+  # leaves it out of its cache key, so every new mise release finds an older
+  # binary in the restored cache, warns that it failed integrity verification
+  # and downloads it again.
+  # renovate: datasource=github-releases depName=jdx/mise extractVersion=^v(?<version>.+)$
+  MISE_VERSION: 2026.10.2
+  # Every tool a CI job runs. mise-action keys its cache on install_args, so
+  # one list means one cache: main's runs save it and every pull request
+  # restores it.
+  MISE_TOOLS: hadolint yamllint actionlint shellcheck
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up mise
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: ${{ env.MISE_VERSION }}
+          install_args: ${{ env.MISE_TOOLS }}
+
+      - name: Lint the Dockerfile
+        run: mise run docker-lint
+
+      - name: Lint the smoke test
+        run: mise run shell-lint
+
+      - name: Lint YAML
+        run: mise run yaml-lint
+
+      # The matcher turns actionlint's output into annotations on the PR diff.
+      # shellcheck is installed above, so the `run:` scripts are checked too.
+      - name: Lint workflows
+        run: |
+          echo "::add-matcher::.github/actionlint-matcher.json"
+          mise run actionlint
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up mise
+        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: ${{ env.MISE_VERSION }}
+          install_args: ${{ env.MISE_TOOLS }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # The task builds for the runner's platform, loads the image into Docker
+      # and runs test/smoke.sh in it.
+      - name: Build and smoke-test the image
+        run: mise run build
+
+      # The same build for both platforms that publish.yaml pushes. The
+      # builder kept the layers of the build above, so linux/amd64 comes from
+      # its cache.
+      - name: Build for every platform
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: false
