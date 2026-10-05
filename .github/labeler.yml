@@ -1,0 +1,36 @@
+# The image: what it's built from and what it adds
+image:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "Dockerfile"
+          - ".hadolint.yaml"
+          - "test/**"
+
+# Documentation
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+
+# Build and CI plumbing
+build:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+          - ".mise.toml"
+          - ".pre-commit-config.yaml"
+          - ".yamllint.yaml"
+          - ".editorconfig"
+          - "renovate.json"
+
+# Add 'enhancement' to any PR whose head branch starts with `feat` or `feature`
+enhancement:
+  - head-branch:
+      - "^feat"
+      - "^feature"
+
+# Add 'bug' to any PR whose head branch starts with `fix` or `bug`
+bug:
+  - head-branch:
+      - "^fix"
+      - "^bug"

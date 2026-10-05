@@ -1,0 +1,62 @@
+# .mise.toml — local tooling, exact pins (repo convention)
+#
+# The tasks below define how the image is linted and built. CI uses these
+# tasks. Renovate keeps every pin in this file current.
+
+[settings]
+# The pins below are the only source of tool versions.
+idiomatic_version_file_enable_tools = []
+
+[tools]
+# Pre-commit for Git hooks
+pre-commit = "4.6.2"
+
+# Linters
+hadolint = "2.15.1"
+yamllint = "1.38.0"
+actionlint = "1.7.12"
+# actionlint runs shellcheck on every `run:` script when it's on PATH, and
+# silently skips them when it isn't.
+shellcheck = "0.11.0"
+
+# Pins GitHub Actions to commit SHAs (see the update-gha task)
+pinact = "5.0.0"
+
+[tasks.lint]
+description = "Lint the Dockerfile, the smoke test, YAML and the workflows"
+depends = ["docker-lint", "shell-lint", "yaml-lint", "actionlint"]
+
+[tasks.docker-lint]
+description = "Lint the Dockerfile with hadolint"
+run = "hadolint Dockerfile"
+
+[tasks.shell-lint]
+description = "Lint the smoke test with shellcheck"
+run = "shellcheck test/smoke.sh"
+
+[tasks.yaml-lint]
+description = "Lint every YAML file in the repository"
+run = "yamllint --strict ."
+
+[tasks.actionlint]
+description = "Lint the GitHub Actions workflows"
+run = "actionlint"
+
+# Builds the image for the platform Docker runs on and runs test/smoke.sh in
+# it: SOPS encrypts a Secret, and Kustomize decrypts it through ksops. CI runs
+# this too, then builds both platforms (see image.yaml).
+[tasks.build]
+description = "Build the image for the local platform as local/argocd-custom-container and smoke-test SOPS and ksops in it"
+run = [
+  "docker buildx build --load --tag local/argocd-custom-container .",
+  "docker run --rm --volume \"${PWD}/test:/test:ro\" --entrypoint /test/smoke.sh local/argocd-custom-container",
+]
+
+# CI additionally builds for linux/arm64 under QEMU (see image.yaml).
+[tasks.check]
+description = "The definition of done: every gate CI runs (needs a Docker daemon for the build)"
+depends = ["lint", "build"]
+
+[tasks.update-gha]
+description = "Pin GitHub Actions to commit SHAs (Renovate keeps them current afterwards)"
+run = "pinact run"

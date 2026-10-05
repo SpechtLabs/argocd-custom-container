@@ -1,0 +1,9 @@
+ignored:
+  # DL3008: pin versions in apt-get install. Ubuntu's archive drops a package
+  # version once an update replaces it, so pins would break the build every
+  # time Argo CD moves its base image; the Argo CD tag pins the base instead.
+  - DL3008
+  # DL3066: numeric USER. The image switches to root by name, which resolves
+  # the same everywhere, and back to the numeric $ARGOCD_USER_ID (999) that
+  # the Argo CD base image sets.
+  - DL3066

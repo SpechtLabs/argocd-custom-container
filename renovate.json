@@ -2,7 +2,10 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    ":semanticCommits"
+    ":semanticCommits",
+    "helpers:pinGitHubActionDigests",
+    "customManagers:githubActionsVersions",
+    "customManagers:dockerfileVersions"
   ],
   "timezone": "Europe/Berlin",
   "dependencyDashboard": true,
@@ -16,32 +19,28 @@
   "labels": [
     "dependencies"
   ],
-  "lockFileMaintenance": {
-    "enabled": true,
-    "schedule": [
-      "before 6am on monday"
-    ],
-    "automerge": true
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "labels": [
+      "dependencies",
+      "security"
+    ]
   },
-  "customManagers": [
-    {
-      "customType": "regex",
-      "description": "Track the Go toolchain version pinned in .mise.toml.",
-      "managerFilePatterns": [
-        "/(^|/)\\.mise\\.toml$/"
-      ],
-      "matchStrings": [
-        "(?:^|\\n)go\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+(?:\\.\\d+)?)\""
-      ],
-      "depNameTemplate": "go",
-      "packageNameTemplate": "go",
-      "datasourceTemplate": "golang-version",
-      "versioningTemplate": "semver"
-    }
-  ],
+  "pre-commit": {
+    "enabled": true
+  },
   "packageRules": [
     {
-      "description": "Automerge digest, pin, patch, and minor updates once CI passes.",
+      "description": "mise is pinned as MISE_VERSION in every workflow that sets it up; move them at once, and only to a release a day old, the age mise-action waited for before the pin.",
+      "matchDepNames": [
+        "jdx/mise"
+      ],
+      "groupName": "mise",
+      "groupSlug": "mise",
+      "minimumReleaseAge": "1 day"
+    },
+    {
+      "description": "Automerge digest, pin, patch, and minor updates once CI passes. CI builds the image and smoke-tests SOPS and ksops in it, and a merge publishes the main tag Argo CD runs.",
       "matchUpdateTypes": [
         "digest",
         "pin",
@@ -74,47 +73,13 @@
       "dependencyDashboardApproval": false
     },
     {
-      "description": "Do not manage npm as a separate mise tool; Node provides npm.",
-      "matchFileNames": [
-        ".mise.toml"
-      ],
+      "description": "SOPS and ksops, the two tools the image adds to Argo CD's, decrypt together; move them in one PR so the smoke test checks them as a pair.",
       "matchDepNames": [
-        "npm"
+        "getsops/sops",
+        "viaduct-ai/kustomize-sops"
       ],
-      "enabled": false
-    },
-    {
-      "description": "Group Go module updates together.",
-      "matchManagers": [
-        "gomod"
-      ],
-      "groupName": "Go modules",
-      "groupSlug": "go-modules"
-    },
-    {
-      "description": "Update .mise.toml and go.mod Go versions together.",
-      "matchDatasources": [
-        "golang-version"
-      ],
-      "matchDepNames": [
-        "go"
-      ],
-      "groupName": "Go toolchain",
-      "groupSlug": "go-toolchain",
-      "rangeStrategy": "bump",
-      "automerge": true,
-      "automergeType": "pr",
-      "platformAutomerge": true,
-      "dependencyDashboardApproval": false
-    },
-    {
-      "description": "Group docs site dependencies together.",
-      "matchFileNames": [
-        "docs/package.json",
-        "docs/bun.lock"
-      ],
-      "groupName": "docs dependencies",
-      "groupSlug": "docs-dependencies"
+      "groupName": "SOPS tooling",
+      "groupSlug": "sops-tooling"
     }
   ]
 }
