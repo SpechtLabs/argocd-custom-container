@@ -1,6 +1,6 @@
 # Argo CD's own image, with SOPS and the ksops Kustomize plugin added so the
 # repo server can decrypt SOPS-encrypted secrets while it builds manifests.
-FROM quay.io/argoproj/argocd:v3.5.3
+FROM quay.io/argoproj/argocd:v3.5.4
 
 # Set by BuildKit to the platform each image of a multi-platform build is for.
 ARG TARGETARCH
